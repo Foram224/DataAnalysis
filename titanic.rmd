@@ -1,0 +1,672 @@
+---
+title: "Titanic Survival"
+author: "Foram Patel"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This analysis attempts to predict the probability for survival of the Titanic passengers. In order to do this, we will use the different features available about the passengers, and based on the relationship between the attributes and the survivors we try to formulate the chances of a passenger surviving.
+
+In this analysis we are determining the relationship between the features and a passenger’s chance of survival, by plotting graphs and running some data manipulation operations on the dataset and finally we define a function which predicts whether a passenger will survive or not.
+
+##Exploratory Data Analysis and Logic
+
+```{r Titanic}
+library(dplyr)
+filePathTrain <- "C:/Users/patel/Downloads/DA/trainTitanic.csv"
+dfTrain <- as.data.frame(read.csv(filePathTrain, header=TRUE))
+head(dfTrain)
+```
+```{r Sex}
+##Survival on basis of sex
+table(dfTrain$Sex)
+s1 <- filter(dfTrain, Survived==1)
+table(s1$Sex)
+library(ggplot2)
+ggplot(data=dfTrain, aes(Survived, fill=Sex)) +
+geom_bar()
+```
+```{r Age}
+##Survival on basis of Age
+summarise(dfTrain, meanage = mean(Age, na.rm=TRUE))
+agem30 <- filter(dfTrain, Age >= 30, Survived==1)
+print(paste("Age more than 30 :", nrow(agem30)))
+agel30 <- filter(dfTrain, Age < 30, Survived==1)
+print(paste("Age less than 30 :", nrow(agel30)))
+agem15 <- filter(dfTrain, Age < 30 & Age >= 15 , Survived==1)
+print(paste("Age more than 15 less than 30 :", nrow(agem15)))
+agel15 <- filter(dfTrain, Age < 15, Survived==1)
+print(paste("Age less than 15 :", nrow(agel15)))
+agem55 <- filter(dfTrain, Age <= 55 & Age >=30 , Survived==1)
+print(paste("Age more than 30 less than 55 :", nrow(agem55)))
+agem55 <- filter(dfTrain, Age > 55, Survived==1)
+print(paste("Age more than 55 :", nrow(agem55)))
+agel10 <- filter(dfTrain, Age < 10, Survived==1)
+print(paste("Age less than 10 :", nrow(agel10)))
+agel5 <- filter(dfTrain, Age < 5, Survived==1)
+print(paste("Age less than 5 :", nrow(agel5)))
+agel55 <- filter(dfTrain, Age >= 30 & Age < 55, Survived==1, Sex=="male")
+print(paste("Age less than 55 and more than 30 :", nrow(agel55)))
+
+ggplot(data=dfTrain, aes(x=factor(Age), color=Survived)) +
+  geom_bar(stat="count", width=0.7, fill="white")
+
+p<-ggplot(dfTrain, aes(x=Age, fill=Survived, color=Survived)) +
+  geom_histogram(position="identity", alpha=0.5)
+p
+
+```
+
+
+```{r q2}
+  #total people died
+  
+  #females not survived
+  notsurvivingFemales <- filter(dfTrain, Survived == 0, Sex == "female")
+  notsurvivingFemales
+  
+  #male not survived
+  notsurvivingMales <- filter(dfTrain, Survived == 0, Sex == "male")
+  notsurvivingMales
+  
+  
+  
+  #total survivals
+  diedfemales<-nrow(notsurvivingFemales)
+ 
+  print(paste("Total males died",diedfemales))
+  
+  diedmales<-nrow(notsurvivingMales)
+  
+  print(paste("Total females died",diedmales))
+ 
+  print(paste("Total people died",diedmales+diedfemales))
+  
+  ```
+  
+```{r q3}
+  
+  #Died pclass
+  class<-filter(dfTrain,Survived==0)
+  y<-select(class, PassengerId,Pclass)
+  
+  table(y$Pclass)##most occuring 
+  print(paste("People died from 3 class the most "))
+  print(paste("and the no of people died in class 3 :327"))
+
+```
+5.
+```{r q4}
+  ##ploting a bar graph
+  ##survived vs not survived
+  
+    
+  ggplot(data = dfTrain,aes(x=Survived,fill=Sex)) + geom_bar()
+  
+```
+6.
+```{r q5}
+   
+    #classswiese survivals    
+
+    ggplot(data = dfTrain,aes(x=Pclass,fill=Survived==1)) + geom_bar()
+    #True = Survived
+    #false = Not survived
+ 
+p<-ggplot(dfTrain, aes(x=Age, fill=Survived, color=Survived)) +
+  geom_histogram(position="identity", alpha=0.5)
+p
+
+```
+7.
+```{r q6}
+
+  #histogram Age vs Survuived
+  ggplot(dfTrain, aes(x=Age, fill=Survived==1)) +
+  geom_histogram(binwidth = 3)
+ 
+```
+8.
+```{r q7}
+  #age and survived people
+
+  age1 <- filter(dfTrain, Survived == 1)
+
+
+  
+  #selecting form age
+  age2<-select(age1,Age,Survived)
+  age3<-na.omit(age2)
+   
+  #finding avg age
+  avgAge<-mean(age3$Age)
+  print(paste("Avg age of the people who have survived",round(avgAge)))
+  
+  
+  
+  
+  
+ 
+  
+```
+9.
+```{r q8}
+  
+  #fare vs survived
+  ggplot(dfTrain, aes(x=Fare, fill=Survived==1)) +
+  geom_histogram()
+
+
+```
+10.
+```{r q9}
+  #SibSp and Survived
+
+  ggplot(dfTrain,aes(x=SibSp,fill = Survived == 1)) + geom_bar()
+  dfTrain
+  
+
+```
+
+12.
+
+```{r q11}
+  #Parch and Survived
+
+  ggplot(dfTrain,aes(x=Parch,fill = Survived == 1)) + geom_bar()
+  dfTrain
+
+
+```
+13.
+```{r q12}
+  
+  sib_par<-filter(dfTrain)
+  table(sib_par$SibSp)
+ 
+  sib_par<-filter(dfTrain,Survived == 1)
+  table(sib_par$SibSp)
+  
+  sib_par<-filter(dfTrain,Survived == 1)
+  table(sib_par$Parch)
+```  
+```{r q13}
+###Survival on the basis of Siblings and Parents onboard
+summarise(dfTrain, meanFare = mean(Fare, na.rm=TRUE))
+s1 <- filter(dfTrain, Survived==1)
+sort(table(s1$Fare), TRUE)
+
+
+s1 <- filter(dfTrain, Survived==1, SibSp == 0, Parch == 0)
+sort(table(s1$Pclass), TRUE)
+nrow(dfTrain$Survived)
+
+s1 <- filter(dfTrain, Survived==1, SibSp == 0, Parch > 0)
+sort(table(s1$Pclass), TRUE)
+
+s1 <- filter(dfTrain, Survived==1, SibSp > 0, Parch > 0)
+sort(table(s1$Pclass), TRUE)
+
+s1 <- filter(dfTrain, Survived==1, SibSp > 0, Parch == 0)
+sort(table(s1$Pclass), TRUE)
+```
+
+14.
+```{r q14}
+ #maleFemaleAgePclass
+
+#FemaleAgeFclass
+femaleAge0to15FclassTot <- filter(dfTrain, Sex=="female", Age <= 15, Pclass==1)
+femaleAge0to15FclassSurvived <- filter(dfTrain,  Sex=="female", Age <= 15, Survived==1, Pclass==1)
+
+print(paste("Percentage of female Survivors in Age range 0 to 15 & First class: ", (nrow(femaleAge0to15FclassSurvived)/nrow(femaleAge0to15FclassTot))*100))
+
+
+
+
+femaleAge15to30FclassTot <- filter(dfTrain, Sex=="female", Age > 15 & Age <= 30, Pclass==1)
+femaleAge15to30FclassSurvived <- filter(dfTrain,  Sex=="female", Age > 15 & Age <= 30, Survived==1, Pclass==1)
+
+print(paste("Percentage of female Survivors in Age range 15 to 30: ", (nrow(femaleAge15to30FclassSurvived)/nrow(femaleAge15to30FclassTot))*100))
+
+
+
+
+femaleAge30to45FclassTot <- filter(dfTrain, Sex=="female", Age > 30 & Age <= 45, Pclass==1)
+femaleAge30to45FclassSurvived <- filter(dfTrain,  Sex=="female", Age > 30 & Age <= 45, Survived==1, Pclass==1)
+
+print(paste("Percentage of female Survivors in Age range 30 to 45: ", (nrow(femaleAge30to45FclassSurvived)/nrow(femaleAge30to45FclassTot))*100))
+
+
+
+femaleAge45to60FclassTot <- filter(dfTrain, Sex=="female", Age > 45 & Age <= 60, Pclass==1)
+femaleAge45to60FclassSurvived <- filter(dfTrain,  Sex=="female", Age > 45 & Age <= 60, Survived==1, Pclass==1)
+
+print(paste("Percentage of female Survivors in Age range 45 to 60: ", (nrow(femaleAge45to60FclassSurvived)/nrow(femaleAge45to60FclassTot))*100))
+
+
+
+
+femaleAgeGT60FclassTot <- filter(dfTrain, Sex=="female", Age >= 60, Pclass==1)
+femaleAgeGT60FclassSurvived <- filter(dfTrain,  Sex=="female", Age >= 60, Survived==1, Pclass==1)
+
+print(paste("Percentage of female Survivors in Age range GT 60: ", (nrow(femaleAgeGT60FclassSurvived)/nrow(femaleAgeGT60FclassTot))*100))
+
+
+
+#FemaleAgeSclass
+
+femaleAge0to15SclassTot <- filter(dfTrain, Sex=="female", Age <= 15, Pclass==2)
+femaleAge0to15SclassSurvived <- filter(dfTrain,  Sex=="female", Age <= 15, Survived==1, Pclass==2)
+
+print(paste("Percentage of female Survivors in Age range 0 to 15 & Second class: ", (nrow(femaleAge0to15SclassTot)/nrow(femaleAge0to15SclassTot))*100))
+
+
+
+
+femaleAge15to30SclassTot <- filter(dfTrain, Sex=="female", Age > 15 & Age <= 30, Pclass==2)
+femaleAge15to30SclassSurvived <- filter(dfTrain,  Sex=="female", Age > 15 & Age <= 30, Survived==1, Pclass==2)
+
+print(paste("Percentage of female Survivors in Age range 15 to 30 & second class: ", (nrow(femaleAge15to30SclassSurvived)/nrow(femaleAge15to30SclassTot))*100))
+
+
+
+
+femaleAge30to45SclassTot <- filter(dfTrain, Sex=="female", Age > 30 & Age <= 45, Pclass==2)
+femaleAge30to45SclassSurvived <- filter(dfTrain,  Sex=="female", Age > 30 & Age <= 45, Survived==1, Pclass==2)
+
+print(paste("Percentage of female Survivors in Age range 30 to 45 & Second class: ", (nrow(femaleAge30to45SclassSurvived)/nrow(femaleAge30to45SclassTot))*100))
+
+
+
+femaleAge45to60SclassTot <- filter(dfTrain, Sex=="female", Age > 45 & Age <= 60, Pclass==3)
+femaleAge45to60SclassSurvived <- filter(dfTrain,  Sex=="female", Age > 45 & Age <= 60, Survived==1, Pclass==3)
+
+print(paste("Percentage of female Survivors in Age range 45 to 60 & Second Class: ", (nrow(femaleAge45to60SclassSurvived)/nrow(femaleAge45to60SclassTot))*100))
+
+
+
+
+femaleAgeGT60SclassTot <- filter(dfTrain, Sex=="female", Age >= 60, Pclass==2)
+femaleAgeGT60SclassSurvived <- filter(dfTrain,  Sex=="female", Age >= 60, Survived==1, Pclass==2)
+
+print(paste("Percentage of female Survivors in Age range GT 60 & Second class: ", (nrow(femaleAgeGT60SclassSurvived)/nrow(femaleAgeGT60SclassTot))*100))
+
+#FemaleAgeTclass
+
+femaleAge0to15TclassTot <- filter(dfTrain, Sex=="female", Age <= 15, Pclass==3)
+femaleAge0to15TclassSurvived <- filter(dfTrain,  Sex=="female", Age <= 15, Survived==1, Pclass==3)
+
+print(paste("Percentage of female Survivors in Age range 0 to 15 & Third class: ", (nrow(femaleAge0to15TclassSurvived)/nrow(femaleAge0to15TclassTot))*100))
+
+
+
+
+femaleAge15to30TclassTot <- filter(dfTrain, Sex=="female", Age > 15 & Age <= 30, Pclass==3)
+femaleAge15to30TclassSurvived <- filter(dfTrain,  Sex=="female", Age > 15 & Age <= 30, Survived==1, Pclass==3)
+
+print(paste("Percentage of female Survivors in Age range 15 to 30 in Third class: ", (nrow(femaleAge15to30TclassSurvived)/nrow(femaleAge15to30TclassTot))*100))
+
+
+
+
+femaleAge30to45TclassTot <- filter(dfTrain, Sex=="female", Age > 30 & Age <= 45, Pclass==3)
+femaleAge30to45TclassSurvived <- filter(dfTrain,  Sex=="female", Age > 30 & Age <= 45, Survived==1, Pclass==3)
+
+print(paste("Percentage of female Survivors in Age range 30 to 45 in Third class: ", (nrow(femaleAge30to45TclassSurvived)/nrow(femaleAge30to45TclassTot))*100))
+
+
+
+femaleAge45to60TclassTot <- filter(dfTrain, Sex=="female", Age > 45 & Age <= 60, Pclass==3)
+femaleAge45to60TclassSurvived <- filter(dfTrain,  Sex=="female", Age > 45 & Age <= 60, Survived==1, Pclass==3)
+
+print(paste("Percentage of female Survivors in Age range 45 to 60 in Third class: ", (nrow(femaleAge45to60TclassSurvived)/nrow(femaleAge45to60TclassTot))*100))
+
+
+
+
+femaleAgeGT60TclassTot <- filter(dfTrain, Sex=="female", Age >= 60, Pclass==3)
+femaleAgeGT60TclassSurvived <- filter(dfTrain,  Sex=="female", Age >= 60, Survived==1, Pclass==3)
+
+femaleAgeGT60TclassSurvived
+femaleAgeGT60TclassTot
+
+print(paste("Percentage of female Survivors in Age range GT 60 in third class: ", (nrow(femaleAgeGT60TclassSurvived)/nrow(femaleAgeGT60TclassTot))*100))
+
+
+#male
+
+#maleAgeFclass
+maleAge0to15FclassTot <- filter(dfTrain, Sex=="male", Age <= 15, Pclass==1)
+maleAge0to15FclassSurvived <- filter(dfTrain,  Sex=="male", Age <= 15, Survived==1, Pclass==1)
+
+print(paste("Percentage of male Survivors in Age range 0 to 15 & First class: ", (nrow(maleAge0to15FclassSurvived)/nrow(maleAge0to15FclassTot))*100))
+
+
+
+
+maleAge15to30FclassTot <- filter(dfTrain, Sex=="male", Age > 15 & Age <= 30, Pclass==1)
+maleAge15to30FclassSurvived <- filter(dfTrain,  Sex=="male", Age > 15 & Age <= 30, Survived==1, Pclass==1)
+
+print(paste("Percentage of male Survivors in Age range 15 to 30: ", (nrow(maleAge15to30FclassSurvived)/nrow(maleAge15to30FclassTot))*100))
+
+
+
+
+maleAge30to45FclassTot <- filter(dfTrain, Sex=="male", Age > 30 & Age <= 45, Pclass==1)
+maleAge30to45FclassSurvived <- filter(dfTrain,  Sex=="male", Age > 30 & Age <= 45, Survived==1, Pclass==1)
+
+print(paste("Percentage of male Survivors in Age range 30 to 45: ", (nrow(maleAge30to45FclassSurvived)/nrow(maleAge30to45FclassTot))*100))
+
+
+
+maleAge45to60FclassTot <- filter(dfTrain, Sex=="female", Age > 45 & Age <= 60, Pclass==1)
+maleAge45to60FclassSurvived <- filter(dfTrain,  Sex=="female", Age > 45 & Age <= 60, Survived==1, Pclass==1)
+
+print(paste("Percentage of male Survivors in Age range 45 to 60: ", (nrow(maleAge45to60FclassSurvived)/nrow(maleAge45to60FclassTot))*100))
+
+
+
+
+maleAgeGT60FclassTot <- filter(dfTrain, Sex=="male", Age >= 60, Pclass==1)
+maleAgeGT60FclassSurvived <- filter(dfTrain,  Sex=="male", Age >= 60, Survived==1, Pclass==1)
+
+print(paste("Percentage of male Survivors in Age range GT 60: ", (nrow(maleAgeGT60FclassSurvived)/nrow(maleAgeGT60FclassTot))*100))
+
+
+
+#FemaleAgeSclass
+
+maleAge0to15SclassTot <- filter(dfTrain, Sex=="male", Age <= 15, Pclass==2)
+maleAge0to15SclassSurvived <- filter(dfTrain,  Sex=="male", Age <= 15, Survived==1, Pclass==2)
+
+print(paste("Percentage of male Survivors in Age range 0 to 15 & Second class: ", (nrow(maleAge0to15SclassTot)/nrow(maleAge0to15SclassTot))*100))
+
+
+
+
+maleAge15to30SclassTot <- filter(dfTrain, Sex=="male", Age > 15 & Age <= 30, Pclass==2)
+maleAge15to30SclassSurvived <- filter(dfTrain,  Sex=="male", Age > 15 & Age <= 30, Survived==1, Pclass==2)
+
+print(paste("Percentage of male Survivors in Age range 15 to 30 & second class: ", (nrow(maleAge15to30SclassSurvived)/nrow(maleAge15to30SclassTot))*100))
+
+
+
+
+maleAge30to45SclassTot <- filter(dfTrain, Sex=="male", Age > 30 & Age <= 45, Pclass==2)
+maleAge30to45SclassSurvived <- filter(dfTrain,  Sex=="male", Age > 30 & Age <= 45, Survived==1, Pclass==2)
+
+print(paste("Percentage of male Survivors in Age range 30 to 45 & Second class: ", (nrow(maleAge30to45SclassSurvived)/nrow(maleAge30to45SclassTot))*100))
+
+
+
+maleAge45to60SclassTot <- filter(dfTrain, Sex=="male", Age > 45 & Age <= 60, Pclass==3)
+maleAge45to60SclassSurvived <- filter(dfTrain,  Sex=="male", Age > 45 & Age <= 60, Survived==1, Pclass==3)
+
+print(paste("Percentage of male Survivors in Age range 45 to 60 & Second Class: ", (nrow(maleAge45to60SclassSurvived)/nrow(maleAge45to60SclassTot))*100))
+
+
+
+
+maleAgeGT60SclassTot <- filter(dfTrain, Sex=="male", Age >= 60, Pclass==2)
+maleAgeGT60SclassSurvived <- filter(dfTrain,  Sex=="male", Age >= 60, Survived==1, Pclass==2)
+
+print(paste("Percentage of male Survivors in Age range GT 60 & Second class: ", (nrow(maleAgeGT60SclassSurvived)/nrow(maleAgeGT60SclassTot))*100))
+
+#maleAgeTclass
+
+maleAge0to15TclassTot <- filter(dfTrain, Sex=="male", Age <= 15, Pclass==3)
+maleAge0to15TclassSurvived <- filter(dfTrain,  Sex=="male", Age <= 15, Survived==1, Pclass==3)
+
+print(paste("Percentage of male Survivors in Age range 0 to 15 & Third class: ", (nrow(maleAge0to15TclassSurvived)/nrow(maleAge0to15TclassTot))*100))
+
+
+
+
+maleAge15to30TclassTot <- filter(dfTrain, Sex=="male", Age > 15 & Age <= 30, Pclass==3)
+maleAge15to30TclassSurvived <- filter(dfTrain,  Sex=="male", Age > 15 & Age <= 30, Survived==1, Pclass==3)
+
+print(paste("Percentage of male Survivors in Age range 15 to 30 in Third class: ", (nrow(maleAge15to30TclassSurvived)/nrow(maleAge15to30TclassTot))*100))
+
+
+
+
+maleAge30to45TclassTot <- filter(dfTrain, Sex=="male", Age > 30 & Age <= 45, Pclass==3)
+maleAge30to45TclassSurvived <- filter(dfTrain,  Sex=="male", Age > 30 & Age <= 45, Survived==1, Pclass==3)
+
+print(paste("Percentage of male Survivors in Age range 30 to 45 in Third class: ", (nrow(maleAge30to45TclassSurvived)/nrow(maleAge30to45TclassTot))*100))
+
+
+
+maleAge45to60TclassTot <- filter(dfTrain, Sex=="male", Age > 45 & Age <= 60, Pclass==3)
+maleAge45to60TclassSurvived <- filter(dfTrain,  Sex=="male", Age > 45 & Age <= 60, Survived==1, Pclass==3)
+
+print(paste("Percentage of male Survivors in Age range 45 to 60 in Third class: ", (nrow(maleAge45to60TclassSurvived)/nrow(maleAge45to60TclassTot))*100))
+
+
+
+
+maleAgeGT60TclassTot <- filter(dfTrain, Sex=="male", Age >= 60, Pclass==3)
+maleAgeGT60TclassSurvived <- filter(dfTrain,  Sex=="male", Age >= 60, Survived==1, Pclass==3)
+
+
+print(paste("Percentage of male Survivors in Age range GT 60 in third class: ", (nrow(maleAgeGT60TclassSurvived)/nrow(maleAgeGT60TclassTot))*100))
+
+
+
+
+SurvivalChances <- function(Age, Sex, Pclass)
+{
+  if(Sex=="female")
+  {
+    if(Pclass==1)
+    {
+      print("Chances of survival for a female in First Class: 96%")
+      if(Age <= 15)
+      {
+        print("Chances of survival: 67%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 97%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 100%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 94%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 100%")
+      }
+    }
+    
+    else if(Pclass==2)
+    {
+      print("Chances of survival for a female in Second Class: 92%")
+      if(Age <= 15)
+      {
+        print("Chances of survival: 100%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 91%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 91.3%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 0%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 100%")
+      }
+    }
+    
+    else if(Pclass==3)
+    {
+      print("Chances of survival for a female in Second Class: 50%")
+      if(Age <= 15)
+      {
+        print("Chances of survival: 53%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 49%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 30%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 0%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 100%")
+      }
+    }
+    if(Pclass=="")
+    {
+      if(Age <= 15)
+      {
+        print("Chances of survival: 65%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 75%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 78%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 85%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 100%")
+      }
+    }
+  }
+  else if(Sex=="male")
+  {
+    if(Pclass==1)
+    {
+      print("Chances of survival for a male in First Class: 37%")
+      if(Age <= 15)
+      {
+        print("Chances of survival: 100%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 43%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 48%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 94%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 14%")
+      }
+    }
+    
+    else if(Pclass==2)
+    {
+      print("Chances of survival for a male in Second Class: 16%")
+      if(Age <= 15)
+      {
+        print("Chances of survival: 100%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 2%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 13%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 0%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 25%")
+      }
+    }
+    
+    else if(Pclass==3)
+    {
+      print("Chances of survival for a male in Second Class: 14%")
+      if(Age <= 15)
+      {
+        print("Chances of survival: 32%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 14%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 14%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 0%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 0%")
+      }
+    }
+    if(Pclass=="")
+    {
+      if(Age <= 15)
+      {
+        print("Chances of survival: 52.5%")
+      }
+      else if(Age > 15 & Age <= 30)
+      {
+        print("Chances of survival: 15%")
+      }
+      else if(Age>30 & Age <= 45)
+      {
+        print("Chances of Survival: 22%")
+      }
+      else if(Age>45 & Age <= 60)
+      {
+        print("Chances of Survival: 18.5%")
+      }
+      else if(Age>60)
+      {
+        print("Chances of Survival: 14%")
+      }
+    }
+  }
+}
+    
+
+    
+SurvivalChances(24, "Male", 1)
+
+
+```  

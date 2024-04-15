@@ -1,0 +1,142 @@
+---
+title: "Fifa 19"
+author: "Foram Patel"
+output: html_document
+---
+
+```{r packages to be installed}
+install.packages("car")
+install.packages("scatterplot3d")
+install.packages("mclust")
+```
+
+
+```{r libraries}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(countrycode)
+```
+
+
+
+```{r readData}
+fifa19 <- read.csv("C:/Users/patel/Downloads/DA/data.csv", header=TRUE)
+```
+
+```{r displayData}
+fifa19
+fifaWoNa <- na.omit(fifa19)
+
+nrow(fifa19)
+nrow(fifaWoNa)
+head(fifa19)
+
+```
+
+
+```{r data cleaning}
+fifaUpdated<-select(fifa19, ID , Name, Age,Nationality,Overall,Potential,Club,Value,Wage,Preferred.Foot,International.Reputation,Skill.Moves,Position,LS,ST,RS,LW,LF,CF,RF,RW,LAM,CAM,RAM,LM,LCM,CM,RCM,RM,LWB,LDM,CDM,RDM,RWB,LB,LCB,CB,RCB,RB,Finishing,HeadingAccuracy,GKDiving,GKHandling,GKKicking,GKPositioning,GKReflexes,Release.Clause )
+```
+```{r Oveall vs Potential}
+plot(fifa19$Potential, fifa19$Overall)
+```
+
+
+
+
+```{r linear regression and points plot}
+
+
+pos <- filter(fifaUpdated, Position=="RF")
+
+
+ggplot(data = fifaUpdated,aes_string(x= "Position" , y = "Overall" , color = "Potential" )) + geom_point() + geom_smooth(method = "lm")
+
+lmPo <- lm(data=fifaUpdated,Overall~Position+Potential)
+summary(lmPo)
+
+plot(fifa19$Overall, fifa19$Position, col="blue")
+```
+
+fifaF <- filter(fifaUpdated, Position!="CM" || "RB")
+
+
+```{r scatter plot: Age vs overall}
+
+
+library(car)
+
+scatterplot(Age ~ Overall, data=fifaUpdated, 
+    xlab="Overall Rating", ylab="Age", 
+   main="Scatter plot of Age and Overall rating")
+```
+```{r 3d plot}
+
+
+library(scatterplot3d)
+
+
+s3d <-scatterplot3d(fifa19$Potential, fifa19$Position, fifa19$Overall, pch=16, highlight.3d=TRUE,
+  type="h", main="3D Scatterplot")
+fit <- lm(fifa19$Overall ~ fifa19$Potential+fifa19$Position) 
+
+```
+
+
+
+
+```{r Generalize positions}
+fifaUpdated <- na.omit(fifaUpdated)
+
+x <- as.factor(fifaUpdated$Position)
+levels(x) <- list(GK  = c("GK"), 
+                  DEF = c("LWB", "LB", "CB", "RB", "RWB", "RCB", "LCB"), 
+                  MID = c("LW","LM","CDM","CM","CAM","RM","RW", "RCM", "RDM", "LAM", "LCM", "RAM", "LDM" ), 
+                  FWD = c("CF", "ST", "RF", "LF", "LS", "RS"))
+
+fifaUpdated <- mutate(fifaUpdated, Position = x)
+
+head(fifaUpdated)
+```
+
+namePos <- select(fifaUpdated, Name, Position)
+
+```{r Value vs Overall linear regression}
+reg = data.frame(fifaUpdated$Value, fifaUpdated$Overall)
+regModel <- lm(fifaUpdated$Overall~fifaUpdated$Value)
+plot(reg,pch=16)
+abline(regModel, col="blue")
+```
+
+```{librares for clustering}
+library(mlbench)
+library(mclust)
+```
+
+```{r Cluster for positions}
+#position cluster
+fifaFinal <- data.frame(fifaUpdated)
+
+pos <- fifaUpdated$Position
+table(pos)
+z <- fifaUpdated[,-1]
+head(z)
+
+clPairs(z, pos)
+
+```
+
+```{r color based on positions}
+ggplot(fifaUpdated, aes(x= Potential, y=Overall, color=Position))+geom_point()
+```
+
+
+
+
+```{r linear model for preferred Foot}
+#linear model based on Preferred Foot
+regFoot <- lm(fifa19$BallControl~fifa19$Dribbling)
+plot(fifa19$Dribbling, fifa19$BallControl, col=fifa19$Preferred.Foot)
+abline(regFoot, col="black")
+```

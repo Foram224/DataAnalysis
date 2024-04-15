@@ -1,0 +1,197 @@
+---
+title: "flightsRegressionWeek2"
+author: "Foram Patel"
+output: html_document
+---
+
+##Introduction
+  
+Here is a dataset: "Flights", which consists of the information about flights, departing from 3 of the busy airports of the New York City- EWR, JFK, LGA. After analyzing all the categories, I try to figure 3 things:
+  1. Which of the categories affect the delay in arrival of the flights on any of the  destination airports?
+  2. Which categories display the most effective correlation with each other?
+  3. Whether categories of a part of the dataset represent the dataset as a whole in a regressive manner or not?  
+  
+  
+  
+  ##Installing the "flilghtsnyc13" dataset; calling library: nycflights13, dplyr; displaying "flights" data
+```{r install -1}
+install.packages("nycflights13", repos = "http://cran.us.r-project.org")
+library(nycflights13)
+flights
+
+library(dplyr)
+```
+
+##Cleaning the flights dataset by removing unnecessary columns
+
+```{r updating flights 1 -2}
+flightsUpdated <- select(flights, year, month, day, dep_delay, arr_time, arr_delay, origin, dest, air_time, distance)
+flightsUpdated
+```
+
+##Structure of the flights dataset
+
+```{r dataset -3}
+str(flights)
+
+
+```
+
+
+
+##finalising the useful data
+
+```{r final data -4}
+flightsWoNa <- na.omit(flights)
+flightsUpdatedF <- filter(flightsWoNa, dest=="ORD" | dest=="ATL" | dest=="LAX", month<4)
+flightsUpdatedF
+summary(flightsUpdatedF)
+```
+
+
+##selecting the variables/columns
+
+
+```{r variables -5}
+colnames(flightsUpdatedF)
+
+data.flightsUpdatedF=flightsUpdatedF[,c( "dep_delay", "arr_time", "air_time")]
+
+```
+
+
+```{r basic plot -6}
+
+plot(data.flightsUpdatedF)
+
+```
+
+By observing these graphs, it's visible that this specific chunk of dataset is not representing any effective correlation between the categories. So, it's required to narrow down the data further.
+
+##narrowing the data
+
+```{r narrowing the data -7}
+
+flightsUpdatedF <- filter(flightsWoNa, dest=="ORD" | dest=="ATL", month<4)
+flightsUpdatedF
+
+data.flightsUpdatedF=flightsUpdatedF[,c( "arr_time", "dep_delay", "air_time", "arr_delay", "dep_time", "sched_dep_time", "sched_arr_time")]
+plot(data.flightsUpdatedF)
+```
+
+
+##linear model of arr_delay vs dep_delay for dest==ORD, ATL, first 3 months
+
+```{r lm - arrDelay vs depDelay -8}
+
+attach(data.flightsUpdatedF)
+linOne<-lm(arr_delay~dep_delay)
+summary(linOne)
+
+
+```
+
+
+##plot linOne
+
+```{r plot linOne -9}
+plot(dep_delay, arr_delay, col="blue")
+abline(linOne$coef, col="gold")
+
+```
+
+This plot represents that the flights destined to 2 of the most busy airports: ORD, ATL in the first 3 months of the year display a strong correlation with the categories: arrival delay and departure delay. Which, in simple language means: A flight would depart late, if it has arrived late on any of these airports. 
+
+The regression line for these 2 categories is also linear and almost near to the y=x equation, meaning the flight's departure delay time will increase by 1 minute for every minute delay in arrival.
+
+
+##linear model for arr_delay vs air_time
+
+```{r lm - arrTime vs depTime -10}
+
+
+attach(data.flightsUpdatedF)
+linTwo<-lm(arr_delay~air_time)
+summary(linTwo)
+
+```
+
+##plot linTwo
+```{r plot linTwo -11}
+plot(air_time, arr_delay, col="blue")
+abline(linTwo$coef, col="gold")
+
+```
+
+By observing this plot, it's easy to say that the air time of the flight reaching ORD or ATL does not affect the arrival delay significantly.
+
+
+##linear model of arr_delay vs dep_delay for the whole data (w/o NA)
+
+```{r lm - arrDelay vs depDelay whole -12}
+
+data.flightsWoNa=flightsWoNa[,c( "arr_time", "dep_delay", "air_time", "arr_delay", "dep_time")]
+plot(data.flightsWoNa)
+
+
+linWh<-lm(arr_delay~dep_delay)
+summary(linWh)
+
+plot(dep_delay, arr_delay, col="blue")
+abline(linWh$coef, col="gold")
+
+```
+
+This regression plot represents that the dataset as a whole also represents significant effect on departure delay due to arrival delay for all the airports throughout the year.
+
+##residuals
+
+```{r residuals -13}
+
+linLast <- lm(arr_delay~dep_delay)
+linRes <- resid(linLast) 
+
+plot(linRes, col="blue")
+abline(0,0)
+
+
+
+```
+
+Overall, the residuals are fairly distributed aroud the 0 line, but there are more number of the residuals in the positive direction from 0 than the negitive.
+
+So, we need to look at some more histograms and plots.
+
+##histogram
+
+```{r histogram -14}
+
+library(ggplot2)
+
+ggplot(flightsUpdatedF, aes(x=arr_delay, fill=dep_delay, color=dep_delay)) +
+  geom_histogram()
+
+```
+
+
+```{r histogram for the whole dataset without NA}
+ggplot(flightsWoNa, aes(x=arr_delay, fill=dep_delay, color=dep_delay)) +
+  geom_histogram()
+
+
+```
+
+
+##residuals and QQ plots for arrival delay-departure delay and arrival delay-air time
+
+```{r}
+plot(linOne, col="blue")
+plot(linTwo, col="gold")
+
+```
+
+
+##Conclusion
+
+To conclude, I would say that the delay in departure of any flight on any airport, on any day of the year is strongly dependent on the arrival delay of the flight. Also, surprisingly the air time of a flight doesn not affect the arrival delay of the same drastically. Lastly, any chunk of the dataset of flights, fairly represent the dataset as a whole almost accurately.
+Hence, Arrival delay and Departure delay are 2 of the strongly correlated categories of nycflights.
